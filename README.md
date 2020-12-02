@@ -1,5 +1,5 @@
 # Password-manager
-Laboratory project for Python Course
+Laboratory project(cat. B, ID:30) for Python Course
 
 INPUT:
 ```
