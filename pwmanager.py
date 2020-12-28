@@ -15,6 +15,50 @@ def encrypt(p):
 
 encrypt(master_password)
 
+import os.path
+
+
+def check_existence():
+    if os.path.exists("info.txt"):
+        pass
+    else:
+        file = open("info.txt", 'w')
+        file.close()
+
+
+def append_new():
+    file = open("info.txt", 'w')
+
+    print()
+    print()
+
+    userName = input("Please enter the user name: ")
+    password = input("Please enter the password here: ")
+    website = input("Please enter the website address here: ")
+
+    print()
+    print()
+
+    usrnm = "UserName: " + userName + "\n"
+    pwd = "Password: " + password + "\n"
+    web = "Website: " + website + "\n"
+
+    file.write("---------------------------------\n")
+    file.write(usrnm)
+    file.write(pwd)
+    file.write(web)
+    file.write("---------------------------------\n")
+    file.write("\n")
+    file.close()
+
+
+def read_passwords():
+    file = open('info.txt', 'r')
+    content = file.read()
+    file.close()
+    print(content)
+
+
 def main():
 	parser = argparse.ArgumentParser()
 	parser.add_argument('master_password', type=str)
