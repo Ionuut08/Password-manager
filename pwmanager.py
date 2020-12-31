@@ -1,5 +1,4 @@
-import sys
-import argparse
+import sqlite3
 import os.path
 
 master_password = "master"
@@ -34,47 +33,38 @@ def read_passwords():
     print(content)
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('master_password', type=str)
-
-    parser.add_argument('-add', '--insertion', type=str)
-    args = parser.parse_args()
-
-    if args.master_password != master_password:
-        # raise ValueError("The master password {} is not recognised".format(args.master_password))
-        print("Master password is not correct")
-
-
-if __name__ == '__main__':
-    main()
-
 # Let the user add a website, an username (generally an email) and a password
 
+
 def append_new():
-    file = open("info.txt", 'w')
+    dbfile = 'pwmanager.db'
+
+    con = sqlite3.connect(dbfile)
+
+    current = con.cursor()
+
+    ident = 1
+    website = "website.com"
+    user_name = "ionut.feraru"
+    password = "verystrongpassword"
 
     print()
     print()
 
-    user_name = input("Please enter the user name: ")
-    password = input("Please enter the password here: ")
-    website = input("Please enter the website address here: ")
+    table_list = [a for a in current.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
+    print(table_list)
 
-    print()
-    print()
+    # add_website_stmt = "insert into passwords(website) values ? "
+    # current.execute("insert into passwords(website) values (?) ", (website,))
+    #
+    # # add_username_stmt = "insert into passwords(username) values ? "
+    # current.execute("insert into passwords(username) values (?) ", (user_name,))
 
-    usrnm = "UserName: " + user_name + "\n"
-    pwd = "Password: " + password + "\n"
-    web = "Website: " + website + "\n"
-
-    file.write("---------------------------------\n")
-    file.write(usrnm)
-    file.write(pwd)
-    file.write(web)
-    file.write("---------------------------------\n")
-    file.write("\n")
-    file.close()
+    # add_password_stmt = "insert into passwords(password) values ? "
+    current.execute("insert into passwords(id, website, username, password) values (?, ?, ?, ?) ",
+                    (ident, website, user_name, password))
+    con.commit()
+    con.close()
 
 
 # Let the user view all the accounts that he has on a specific website
@@ -82,3 +72,30 @@ def append_new():
 # Let the user remove a website
 
 # Let the user list all the passwords, websites and usernames
+
+def main():
+    append_new()
+    # parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
+    #                                                                        '-<operation> <website> <username> <password>')
+    # parser.add_argument('master_password', type=str)
+    #
+    # parser.add_argument('-add', type=str)
+    #
+    # subparsers = parser.add_subparsers(title='add commands')
+    # subparsers.add_parser('website')
+    # subparsers.add_parser('username')
+    # subparsers.add_parser('password')
+    #
+    # parser.add_argument('-get', type=str)
+    # parser.add_argument('-remove', type=str)
+    # parser.add_argument('-list', type=str)
+    # args = parser.parse_args()
+    # print(args)
+
+    # if args.master_password != master_password:
+    #     # raise ValueError("The master password {} is not recognised".format(args.master_password))
+    #     print("Master password is not correct")
+
+
+if __name__ == '__main__':
+    main()
