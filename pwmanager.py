@@ -27,8 +27,6 @@ def check_existence():
         file.close()
 
 
-
-
 # Let the user add a website, an username (generally an email) and a password
 
 
@@ -60,11 +58,20 @@ def append_new(website, username, password):
 
 # Let the user view all the accounts that he has on a specific website
 
-
-
 # Let the user remove a website
+def remove_a_website(website):
+    dbfile = 'pwmanager.db'
+
+    con = sqlite3.connect(dbfile)
+
+    current = con.cursor()
+
+    current.execute("Delete from passwords where website = ?", (website,))
+    con.commit()
+    con.close()
 
 # Let the user list all the passwords, websites and usernames
+
 
 def read_passwords():
     dbfile = 'pwmanager.db'
@@ -87,8 +94,10 @@ def read_passwords():
 
 
 def main():
-    encrypted_password = encrypt("password")
-    append_new("gmail.com", "ionuuut.fer", encrypted_password)
+    # encrypted_password = encrypt("password")
+    # append_new("gmail.com", "ionuuut.fer", encrypted_password)
+    read_passwords()
+    remove_a_website("gmail.com")
     read_passwords()
     # parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
     #                                                                        '-<operation> <website> <username> <password>')
