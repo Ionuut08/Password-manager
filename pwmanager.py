@@ -1,5 +1,6 @@
 import sqlite3
 import os.path
+import argparse
 
 master_password = "master"
 initialization_vector = "00112233445566778899AABBCCDDEEFF"
@@ -12,7 +13,7 @@ def xor_strings(s, t):
 # Temporary function to ``encrypt`` a password
 def encrypt(p):
     encrypted_p = xor_strings(p, initialization_vector)
-    print(encrypted_p)
+    return encrypted_p
 
 
 encrypt(master_password)
@@ -26,27 +27,17 @@ def check_existence():
         file.close()
 
 
-def read_passwords():
-    file = open('info.txt', 'r')
-    content = file.read()
-    file.close()
-    print(content)
 
 
 # Let the user add a website, an username (generally an email) and a password
 
 
-def append_new():
+def append_new(website, username, password):
     dbfile = 'pwmanager.db'
 
     con = sqlite3.connect(dbfile)
 
     current = con.cursor()
-
-    ident = 1
-    website = "website.com"
-    user_name = "ionut.feraru"
-    password = "verystrongpassword"
 
     print()
     print()
@@ -61,20 +52,44 @@ def append_new():
     # current.execute("insert into passwords(username) values (?) ", (user_name,))
 
     # add_password_stmt = "insert into passwords(password) values ? "
-    current.execute("insert into passwords(id, website, username, password) values (?, ?, ?, ?) ",
-                    (ident, website, user_name, password))
+    current.execute("insert into passwords(website, username, password) values (?, ?, ?) ",
+                    (website, username, password))
     con.commit()
     con.close()
 
 
 # Let the user view all the accounts that he has on a specific website
 
+
+
 # Let the user remove a website
 
 # Let the user list all the passwords, websites and usernames
 
+def read_passwords():
+    dbfile = 'pwmanager.db'
+
+    con = sqlite3.connect(dbfile)
+
+    current = con.cursor()
+
+    show_usernames = [a for a in current.execute("Select username from passwords")]
+    print(show_usernames)
+
+    show_websites = [a for a in current.execute("Select website from passwords")]
+    print(show_websites)
+
+    show_passwords = [a for a in current.execute("Select password from passwords")]
+    print(show_passwords)
+
+    con.commit()
+    con.close()
+
+
 def main():
-    append_new()
+    encrypted_password = encrypt("password")
+    append_new("gmail.com", "ionuuut.fer", encrypted_password)
+    read_passwords()
     # parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
     #                                                                        '-<operation> <website> <username> <password>')
     # parser.add_argument('master_password', type=str)
@@ -91,7 +106,7 @@ def main():
     # parser.add_argument('-list', type=str)
     # args = parser.parse_args()
     # print(args)
-
+    #
     # if args.master_password != master_password:
     #     # raise ValueError("The master password {} is not recognised".format(args.master_password))
     #     print("Master password is not correct")
