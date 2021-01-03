@@ -57,8 +57,22 @@ def append_new(website, username, password):
 
 
 # Let the user view all the accounts that he has on a specific website
+def get(website):
+    dbfile = 'pwmanager.db'
+
+    con = sqlite3.connect(dbfile)
+
+    current = con.cursor()
+
+    get_website = [a for a in current.execute("SELECT website, username, password from passwords where website = ?", (website,))]
+    print(get_website)
+
+    con.commit()
+    con.close()
+
 
 # Let the user remove a website
+
 def remove_a_website(website):
     dbfile = 'pwmanager.db'
 
@@ -69,6 +83,7 @@ def remove_a_website(website):
     current.execute("Delete from passwords where website = ?", (website,))
     con.commit()
     con.close()
+
 
 # Let the user list all the passwords, websites and usernames
 
@@ -96,9 +111,7 @@ def read_passwords():
 def main():
     # encrypted_password = encrypt("password")
     # append_new("gmail.com", "ionuuut.fer", encrypted_password)
-    read_passwords()
-    remove_a_website("gmail.com")
-    read_passwords()
+    get("website.com")
     # parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
     #                                                                        '-<operation> <website> <username> <password>')
     # parser.add_argument('master_password', type=str)
