@@ -64,7 +64,10 @@ def get(website):
 
     current = con.cursor()
 
-    get_website = [a for a in current.execute("SELECT website, username, password from passwords where website = ?", (website,))]
+    str_website = str(website)
+
+    get_website = [a for a in current.execute("SELECT website, username, password from passwords where website = ?",
+                                              (str_website,))]
     print(get_website)
 
     con.commit()
@@ -110,28 +113,44 @@ def read_passwords():
 
 def main():
     # encrypted_password = encrypt("password")
-    # append_new("gmail.com", "ionuuut.fer", encrypted_password)
-    get("website.com")
-    # parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
-    #                                                                        '-<operation> <website> <username> <password>')
-    # parser.add_argument('master_password', type=str)
-    #
-    # parser.add_argument('-add', type=str)
-    #
-    # subparsers = parser.add_subparsers(title='add commands')
-    # subparsers.add_parser('website')
-    # subparsers.add_parser('username')
-    # subparsers.add_parser('password')
-    #
-    # parser.add_argument('-get', type=str)
-    # parser.add_argument('-remove', type=str)
-    # parser.add_argument('-list', type=str)
-    # args = parser.parse_args()
-    # print(args)
-    #
-    # if args.master_password != master_password:
-    #     # raise ValueError("The master password {} is not recognised".format(args.master_password))
-    #     print("Master password is not correct")
+    # get("website.com")
+
+    parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
+                                                                           '-<operation> <website> <username> <password>')
+    parser.add_argument('master_password', type=str)
+    parser.add_argument('-get', type=str)
+    parser.add_argument('-remove', type=str)
+    parser.add_argument('-list', action='store_true', help="List all the websites, username and passwords")
+
+    parser.add_argument('-add', nargs=3, type=str, help='the operation to be done')
+
+    args = parser.parse_args()
+
+    if args.add:
+        arguments = args.add
+        website = arguments[0]
+        username = arguments[1]
+        password = arguments[2]
+        enc_p = encrypt(password)
+        print(website, username, enc_p)
+
+    elif args.list:
+        read_passwords()
+
+    elif args.get:
+        website_to_be_read = args.get
+        get(website_to_be_read)
+
+    elif args.remove:
+        website_to_be_removed = args.remove
+        remove_a_website(website_to_be_removed)
+
+    # for i, argument in enumerate(args.add):
+    #     append_new(argument[1], argument[2], argument[3])
+    #     print(f'[ {i} ] Supplied to add: {argument}')
+
+    if args.master_password != master_password:
+        raise ValueError("The master password {} is not recognised".format(args.master_password))
 
 
 if __name__ == '__main__':
