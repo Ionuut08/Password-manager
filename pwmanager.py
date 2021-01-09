@@ -1,22 +1,29 @@
 import sqlite3
 import os.path
 import argparse
+import os
+import encryption
 
 master_password = "master"
-initialization_vector = "00112233445566778899AABBCCDDEEFF"
+
+dbfile = 'pwmanager.db'
+
+con = sqlite3.connect(dbfile)
 
 
-def xor_strings(s, t):
-    return "".join(chr(ord(a) ^ ord(b)) for a, b in zip(s, t))
-
-
-# Temporary function to ``encrypt`` a password
-def encrypt(p):
-    encrypted_p = xor_strings(p, initialization_vector)
-    return encrypted_p
-
-
-encrypt(master_password)
+# def xor_strings(s, t):
+#     return "".join(chr(ord(a) ^ ord(b)) for a, b in zip(s, t))
+#
+#
+# # Temporary function to ``encrypt`` a password
+# def encrypt(p):
+#     encrypted_p = xor_strings(p, initialization_vector)
+#     return encrypted_p
+#
+#
+# def decrypt(p):
+#     encrypted_p = xor_strings(p, initialization_vector)
+#     return encrypted_p
 
 
 def check_existence():
@@ -31,40 +38,30 @@ def check_existence():
 
 
 def append_new(website, username, password):
-    dbfile = 'pwmanager.db'
-
-    con = sqlite3.connect(dbfile)
-
     current = con.cursor()
 
     print()
     print()
 
-    table_list = [a for a in current.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
-    print(table_list)
+    # table_list = [a for a in current.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
+    # print(table_list)
 
-    # add_website_stmt = "insert into passwords(website) values ? "
-    # current.execute("insert into passwords(website) values (?) ", (website,))
-    #
-    # # add_username_stmt = "insert into passwords(username) values ? "
-    # current.execute("insert into passwords(username) values (?) ", (user_name,))
-
-    # add_password_stmt = "insert into passwords(password) values ? "
+    encrypted_password = encryption.encrypt_password(password, master_password)
     current.execute("insert into passwords(website, username, password) values (?, ?, ?) ",
-                    (website, username, password))
+                    (website, username, encrypted_password))
     con.commit()
     con.close()
 
 
 # Let the user view all the accounts that he has on a specific website
 def get(website):
-    dbfile = 'pwmanager.db'
-
-    con = sqlite3.connect(dbfile)
-
     current = con.cursor()
-
     str_website = str(website)
+    #
+    # select_password = [a[0] for a in current.execute("SELECT password from passwords where website = ?",
+    #                                               (str_website,))]
+    # print(select_password)
+    # decrypted_password = decrypt(select_password, "l")
 
     get_website = [a for a in current.execute("SELECT website, username, password from passwords where website = ?",
                                               (str_website,))]
@@ -77,10 +74,6 @@ def get(website):
 # Let the user remove a website
 
 def remove_a_website(website):
-    dbfile = 'pwmanager.db'
-
-    con = sqlite3.connect(dbfile)
-
     current = con.cursor()
 
     current.execute("Delete from passwords where website = ?", (website,))
@@ -92,10 +85,6 @@ def remove_a_website(website):
 
 
 def read_passwords():
-    dbfile = 'pwmanager.db'
-
-    con = sqlite3.connect(dbfile)
-
     current = con.cursor()
 
     show_usernames = [a for a in current.execute("Select username from passwords")]
@@ -112,8 +101,8 @@ def read_passwords():
 
 
 def main():
-    # encrypted_password = encrypt("password")
-    # get("website.com")
+    password = 'parola foarte grea'
+    print(encryption.encrypt_password(password, master_password))
 
     parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
                                                                            '-<operation> <website> <username> <password>')
@@ -131,7 +120,8 @@ def main():
         website = arguments[0]
         username = arguments[1]
         password = arguments[2]
-        enc_p = encrypt(password)
+        enc_p = encryption.encrypt_password(password, master_password)
+        append_new(website, username, password)
         print(website, username, enc_p)
 
     elif args.list:
