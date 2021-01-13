@@ -1,56 +1,30 @@
 
-from base64 import b64encode, b64decode
 import hashlib
-from Cryptodome.Cipher import AES
-import os
-from Cryptodome.Random import get_random_bytes
+
+from itertools import cycle
+from random import randint
 
 
 def encrypt_password(plain_text, password):
-    # generate a random salt
-    salt = get_random_bytes(AES.block_size)
-
-    # use the Scrypt KDF to get a private key from the password
-    private_key = hashlib.scrypt(
-        password.encode(), salt=salt, n=2**14, r=8, p=1, dklen=32)
-
-    # create cipher config
-    cipher_config = AES.new(private_key, AES.MODE_GCM)
-
-    # return a dictionary with the encrypted text
-    cipher_text, tag = cipher_config.encrypt_and_digest(bytes(plain_text, 'utf-8'))
-    return b64encode(cipher_text).decode('utf-8')
+    encoded_password = bytes(password, 'utf-8')
+    hashed_password = hashlib.md5(encoded_password).hexdigest()
+    addition_char = randint(0, 0x100)
+    if len(plain_text) > len(hashed_password):
+        pwd_iterable = cycle(hashed_password)
+    else:
+        pwd_iterable = hashed_password
+    ret = [chr(((ord(i) ^ ord(j)) + addition_char)) for i, j in zip(plain_text, pwd_iterable)]
+    return "".join(reversed(ret)) + chr(addition_char)
 
 
-def decrypt_password(enc_dict, password):
-    # decode the dictionary entries from base64
-    salt = '/T7Qb1nzDaT3nqlwoeLU/w=='
-    cipher_text = b64decode(enc_dict['cipher_text'])
-    nonce = 'CdzGO/l26viorBwmslmLlg=='
-    tag = '/T7Qb1nzDaT3nqlwoeLU/w=='
-
-    # generate the private key from the password and salt
-    private_key = hashlib.scrypt(
-        password.encode(), salt=salt, n=2 ** 14, r=8, p=1, dklen=32)
-
-    # create the cipher config
-    cipher = AES.new(private_key, AES.MODE_GCM, nonce=nonce)
-
-    # decrypt the cipher text
-    decrypted = cipher.decrypt_and_verify(cipher_text, tag)
-
-    return decrypted
-
-
-def main():
-    password = 'master'
-
-    encrypted = encrypt("verygoodpassword", password)
-    print(encrypted)
-
-    decrypted = decrypt(encrypted, password)
-    print(decrypted)
-
-
-if __name__ == '__main__':
-    main()
+def decrypt_password(plain_text, password):
+    encoded_password = bytes(password, 'utf-8')
+    hashed_password = hashlib.md5(encoded_password).hexdigest()
+    addition_char = ord(plain_text[-1])
+    if len(plain_text) > len(hashed_password):
+        pwd_iterable = cycle(hashed_password)
+    else:
+        pwd_iterable = hashed_password
+    ret = [chr((((ord(i) - addition_char) + 0x100) % 0x100) ^ ord(j)) for i, j in zip(reversed(plain_text[:-1]),
+                                                                                      pwd_iterable)]
+    return "".join(ret)

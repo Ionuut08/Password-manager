@@ -1,52 +1,18 @@
 import sqlite3
-import os.path
 import argparse
-import os
 import encryption
 
 master_password = "master"
 
 dbfile = 'pwmanager.db'
-
 con = sqlite3.connect(dbfile)
 
-
-# def xor_strings(s, t):
-#     return "".join(chr(ord(a) ^ ord(b)) for a, b in zip(s, t))
-#
-#
-# # Temporary function to ``encrypt`` a password
-# def encrypt(p):
-#     encrypted_p = xor_strings(p, initialization_vector)
-#     return encrypted_p
-#
-#
-# def decrypt(p):
-#     encrypted_p = xor_strings(p, initialization_vector)
-#     return encrypted_p
-
-
-def check_existence():
-    if os.path.exists("info.txt"):
-        pass
-    else:
-        file = open("info.txt", 'w')
-        file.close()
-
-
 # Let the user add a website, an username (generally an email) and a password
-
 
 def append_new(website, username, password):
     current = con.cursor()
 
-    print()
-    print()
-
-    # table_list = [a for a in current.execute("SELECT name FROM sqlite_master WHERE type = 'table'")]
-    # print(table_list)
-
-    encrypted_password = encryption.encrypt_password(password, master_password)
+    encrypted_password = encryption.encrypt_password(password, master_password).encode('utf-8').hex()
     current.execute("insert into passwords(website, username, password) values (?, ?, ?) ",
                     (website, username, encrypted_password))
     con.commit()
@@ -54,14 +20,24 @@ def append_new(website, username, password):
 
 
 # Let the user view all the accounts that he has on a specific website
+
 def get(website):
     current = con.cursor()
     str_website = str(website)
-    #
-    # select_password = [a[0] for a in current.execute("SELECT password from passwords where website = ?",
-    #                                               (str_website,))]
-    # print(select_password)
-    # decrypted_password = decrypt(select_password, "l")
+
+    select_password = [a for a in current.execute("SELECT password from passwords where website = ?",
+                                                  (str_website,))]
+
+    password_for_printing = str(select_password)[3:-4]
+    password_for_decrypt = bytes.fromhex(password_for_printing).decode('utf-8')
+
+    select_username = [a for a in current.execute("SELECT username from passwords where website = ?",
+                                                  (str_website,))]
+
+    select_username_for_printing = str(select_username)[3:-4]
+
+    print("Username: ", select_username_for_printing)
+    print("Password: ", encryption.decrypt_password(password_for_decrypt, master_password))
 
     get_website = [a for a in current.execute("SELECT website, username, password from passwords where website = ?",
                                               (str_website,))]
@@ -101,11 +77,9 @@ def read_passwords():
 
 
 def main():
-    password = 'parola foarte grea'
-    print(encryption.encrypt_password(password, master_password))
-
     parser = argparse.ArgumentParser(description='Password manager', usage='%(prog)s <master_password> '
-                                                                           '-<operation> <website> <username> <password>')
+                                                                           '-<operation> <website> <username> '
+                                                                           '<password>')
     parser.add_argument('master_password', type=str)
     parser.add_argument('-get', type=str)
     parser.add_argument('-remove', type=str)
@@ -115,14 +89,16 @@ def main():
 
     args = parser.parse_args()
 
+    if args.master_password != master_password:
+        raise ValueError("The master password {} is not recognised".format(args.master_password))
+
     if args.add:
         arguments = args.add
         website = arguments[0]
         username = arguments[1]
         password = arguments[2]
-        enc_p = encryption.encrypt_password(password, master_password)
         append_new(website, username, password)
-        print(website, username, enc_p)
+        print(website, username, password)
 
     elif args.list:
         read_passwords()
@@ -134,13 +110,6 @@ def main():
     elif args.remove:
         website_to_be_removed = args.remove
         remove_a_website(website_to_be_removed)
-
-    # for i, argument in enumerate(args.add):
-    #     append_new(argument[1], argument[2], argument[3])
-    #     print(f'[ {i} ] Supplied to add: {argument}')
-
-    if args.master_password != master_password:
-        raise ValueError("The master password {} is not recognised".format(args.master_password))
 
 
 if __name__ == '__main__':
